@@ -103,25 +103,55 @@ dark-ralph/
 - Companion workspaces for Automaton, OpenClawd TUI, Cloudflare Workers, and
   Anchor staking development.
 
-## Quick Start
+## Install And Start
 
-Installed launcher:
+Use the hosted installer if you just want to run Dark Ralph:
 
 ```bash
 curl -fsSL https://install.solanaclawd.com | bash
 ralph
 ```
 
-Local development:
+The installer detects macOS/Linux architecture, installs the Solana Clawd command
+set into `~/.local/bin`, and creates a shared config file at
+`~/.clawd/config.env`. It installs the `ralph` launcher for the Dark Ralph TUI.
+
+If your shell cannot find `ralph`, add `~/.local/bin` to your `PATH` and restart
+the terminal:
 
 ```bash
-cd dark-ralph
+export PATH="$HOME/.local/bin:$PATH"
+ralph
+```
+
+For local development from this repository:
+
+```bash
+cd /Users/8bit/Downloads/clawd-terminal/dark-ralph
 bun install
 bun run run
 ```
 
 The TUI boots without every provider key. Missing providers show as disconnected
-and dependent commands fail closed.
+and dependent commands fail closed, so the first screen should still open even
+before you add API keys.
+
+For local API keys, create `.env` from the example or add the keys you need:
+
+```bash
+cp .env.example .env
+bun run status
+bun run run
+```
+
+If this package is installed from npm or built locally, these launchers are
+available:
+
+```bash
+dark-ralph run
+ralph run
+ralph-tui run
+```
 
 ## Commands
 
@@ -139,7 +169,7 @@ bun run wallet -- --balance         # Show wallet balance
 bun run wallet -- --address         # Show wallet address
 ```
 
-Package binaries after build or install:
+Built package binaries:
 
 ```bash
 dark-ralph run
