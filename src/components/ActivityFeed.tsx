@@ -31,6 +31,7 @@ interface ActivityFeedProps {
   maxItems?: number;
   showSignatures?: boolean;
   title?: string;
+  width?: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -63,12 +64,13 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
   maxItems = 10,
   showSignatures = false,
   title = 'ACTIVITY FEED',
+  width,
 }) => {
   const defaultActivities = activities || generateMockActivities();
   const visibleActivities = defaultActivities.slice(0, maxItems);
 
   return (
-    <Box flexDirection="column" borderStyle="single" borderColor="green">
+    <Box flexDirection="column" borderStyle="single" borderColor="green" width={width}>
       {/* Header */}
       <Box justifyContent="space-between" paddingX={1} borderBottom>
         <Text color="greenBright" bold>
@@ -80,7 +82,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
       {/* Activity List */}
       <Box flexDirection="column" paddingX={1}>
         {visibleActivities.map((activity) => (
-          <ActivityItem key={activity.id} activity={activity} showSignature={showSignatures} />
+          <ActivityItem key={activity.id} activity={activity} showSignature={showSignatures} width={width} />
         ))}
       </Box>
 
@@ -100,9 +102,10 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
 // ACTIVITY ITEM
 // ─────────────────────────────────────────────────────────────────────────────
 
-const ActivityItem: React.FC<{ activity: Activity; showSignature?: boolean }> = ({
+const ActivityItem: React.FC<{ activity: Activity; showSignature?: boolean; width?: number }> = ({
   activity,
   showSignature,
+  width,
 }) => {
   const typeStyle = ACTIVITY_STYLES[activity.type];
   const statusStyle = STATUS_STYLES[activity.status];
@@ -124,7 +127,7 @@ const ActivityItem: React.FC<{ activity: Activity; showSignature?: boolean }> = 
       <Text color={typeStyle.color as any}> {typeStyle.label.padEnd(8)}</Text>
 
       {/* Description */}
-      <Text color="white">{activity.description}</Text>
+      <Text color="white">{truncate(activity.description, Math.max(10, (width || 60) - 24))}</Text>
 
       {/* Signature (if enabled) */}
       {showSignature && activity.signature && (
@@ -314,6 +317,7 @@ interface TopMoversProps {
   autoRefresh?: boolean;
   refreshInterval?: number;
   limit?: number;
+  width?: number;
 }
 
 export const TopMovers: React.FC<TopMoversProps> = ({
@@ -323,6 +327,7 @@ export const TopMovers: React.FC<TopMoversProps> = ({
   autoRefresh = true,
   refreshInterval = 30000,
   limit = 3,
+  width = 50,
 }) => {
   const [liveGainers, setLiveGainers] = useState<Array<{ symbol: string; change: number; price: number }> | null>(null);
   const [liveLosers, setLiveLosers] = useState<Array<{ symbol: string; change: number; price: number }> | null>(null);
@@ -389,9 +394,9 @@ export const TopMovers: React.FC<TopMoversProps> = ({
         </Text>
       </Box>
 
-      <Box paddingX={1}>
+      <Box paddingX={1} flexDirection={width < 36 ? 'column' : 'row'}>
         {/* Gainers */}
-        <Box flexDirection="column" marginRight={2}>
+        <Box flexDirection="column" marginRight={width < 36 ? 0 : 2}>
           <Text color="green" bold>
             ▲ GAINERS
           </Text>
@@ -404,10 +409,10 @@ export const TopMovers: React.FC<TopMoversProps> = ({
         </Box>
 
         {/* Separator */}
-        <Text color="gray">│</Text>
+        {width >= 36 && <Text color="gray">│</Text>}
 
         {/* Losers */}
-        <Box flexDirection="column" marginLeft={2}>
+        <Box flexDirection="column" marginLeft={width < 36 ? 0 : 2}>
           <Text color="red" bold>
             ▼ LOSERS
           </Text>
@@ -487,6 +492,11 @@ function formatTime(timestamp: number): string {
     second: '2-digit',
     hour12: false,
   });
+}
+
+function truncate(value: string, maxLength: number): string {
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, Math.max(0, maxLength - 1))}…`;
 }
 
 function formatTimeShort(timestamp: number): string {
