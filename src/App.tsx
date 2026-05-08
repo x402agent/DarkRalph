@@ -268,7 +268,7 @@ export const App: React.FC<{ config: AppConfig }> = ({ config }) => {
       });
     }
 
-    if (key.escape) {
+    if (key.escape || input === 'q' || input === 'Q') {
       agent.stop();
       exit();
     }

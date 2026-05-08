@@ -90,8 +90,11 @@ export const PriceChart: React.FC<PriceChartProps> = ({
     return () => clearInterval(interval);
   }, [address, apiKey, timeframe, refreshInterval]);
 
-  // Use provided data, live data, or generate mock
-  const candles = data || liveData || generateMockCandles(width - 4);
+  const chartWidth = Math.max(8, width - 12);
+
+  // Use provided data, live data, or generate mock. Keep the plotted columns
+  // inside the bordered panel after the y-axis and horizontal padding.
+  const candles = (data || liveData || generateMockCandles(chartWidth)).slice(-chartWidth);
 
   // Calculate price range
   const prices = candles.flatMap((c) => [c.high, c.low]);
@@ -176,8 +179,8 @@ export const PriceChart: React.FC<PriceChartProps> = ({
         </Box>
         <Box>
           <Text color={change >= 0 ? 'green' : 'red'}>
-            ${latest.close.toFixed(2)} ({change >= 0 ? '+' : ''}
-            {changePercent.toFixed(2)}%)
+            ${latest.close.toFixed(2)}
+            {width >= 42 ? ` (${change >= 0 ? '+' : ''}${changePercent.toFixed(2)}%)` : ''}
           </Text>
         </Box>
       </Box>
@@ -240,12 +243,16 @@ export const PriceChart: React.FC<PriceChartProps> = ({
         <Text color="gray">
           H: <Text color="green">{latest.high.toFixed(2)}</Text>
         </Text>
-        <Text color="gray">
-          L: <Text color="red">{latest.low.toFixed(2)}</Text>
-        </Text>
-        <Text color="gray">
-          C: <Text color="white">{latest.close.toFixed(2)}</Text>
-        </Text>
+        {width >= 42 && (
+          <>
+            <Text color="gray">
+              L: <Text color="red">{latest.low.toFixed(2)}</Text>
+            </Text>
+            <Text color="gray">
+              C: <Text color="white">{latest.close.toFixed(2)}</Text>
+            </Text>
+          </>
+        )}
       </Box>
 
       {/* Legend */}
