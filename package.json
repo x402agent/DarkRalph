@@ -11,8 +11,8 @@
   },
   "scripts": {
     "dev": "bun run src/cli.tsx",
-    "build": "bun build src/cli.tsx --outdir dist --target node",
-    "build:lib": "bun build src/index.ts --outdir dist --target node",
+    "build": "bun build src/cli.tsx --outdir dist --target node && cp node_modules/yoga-wasm-web/dist/yoga.wasm dist/yoga.wasm",
+    "build:lib": "bun build src/index.ts --outdir dist --target node && cp node_modules/yoga-wasm-web/dist/yoga.wasm dist/yoga.wasm",
     "start": "bun run dist/cli.js",
     "run": "bun run src/cli.tsx run",
     "setup": "bun run src/cli.tsx setup",
