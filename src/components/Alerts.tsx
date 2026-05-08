@@ -357,12 +357,13 @@ export const AlertFeed: React.FC<{
   alerts?: Alert[];
   maxItems?: number;
   title?: string;
-}> = ({ alerts, maxItems = 8, title = 'LIVE FEED' }) => {
+  width?: number;
+}> = ({ alerts, maxItems = 8, title = 'LIVE FEED', width }) => {
   const defaultAlerts = alerts || generateMockAlerts();
   const visibleAlerts = defaultAlerts.slice(0, maxItems);
 
   return (
-    <Box flexDirection="column" borderStyle="single" borderColor="green">
+    <Box flexDirection="column" borderStyle="single" borderColor="green" width={width}>
       <Box paddingX={1} borderBottom justifyContent="space-between">
         <Text color="greenBright" bold>
           {title}
@@ -379,7 +380,7 @@ export const AlertFeed: React.FC<{
                 {formatTime(alert.timestamp)}
               </Text>
               <Text color={style.color as any}> {style.icon}</Text>
-              <Text color="white"> {alert.message}</Text>
+              <Text color="white"> {truncate(alert.message, Math.max(10, (width || 60) - 14))}</Text>
             </Box>
           );
         })}
@@ -452,6 +453,11 @@ function formatTime(timestamp: number): string {
     second: '2-digit',
     hour12: false,
   });
+}
+
+function truncate(value: string, maxLength: number): string {
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, Math.max(0, maxLength - 1))}…`;
 }
 
 function formatAmount(amount: number): string {

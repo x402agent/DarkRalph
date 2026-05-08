@@ -402,8 +402,8 @@ export const TopMovers: React.FC<TopMoversProps> = ({
           </Text>
           {displayGainers.map((token) => (
             <Box key={token.symbol}>
-              <Text color="cyan">{token.symbol.padEnd(6)}</Text>
-              <Text color="green">+{token.change.toFixed(1)}%</Text>
+              <Text color="cyan">{truncate(token.symbol, 6).padEnd(6)}</Text>
+              <Text color="green">{truncate(`+${token.change.toFixed(1)}%`, width < 36 ? 12 : 16)}</Text>
             </Box>
           ))}
         </Box>
@@ -418,8 +418,8 @@ export const TopMovers: React.FC<TopMoversProps> = ({
           </Text>
           {displayLosers.map((token) => (
             <Box key={token.symbol}>
-              <Text color="cyan">{token.symbol.padEnd(6)}</Text>
-              <Text color="red">{token.change.toFixed(1)}%</Text>
+              <Text color="cyan">{truncate(token.symbol, 6).padEnd(6)}</Text>
+              <Text color="red">{truncate(`${token.change.toFixed(1)}%`, width < 36 ? 12 : 16)}</Text>
             </Box>
           ))}
         </Box>

@@ -304,6 +304,11 @@ export const App: React.FC<{ config: AppConfig }> = ({ config }) => {
     [agent]
   );
 
+  const handleExit = useCallback(() => {
+    agent.stop();
+    exit();
+  }, [agent, exit]);
+
   // ─────────────────────────────────────────────────────────────────────────────
   // Render
   // ─────────────────────────────────────────────────────────────────────────────
@@ -351,6 +356,7 @@ export const App: React.FC<{ config: AppConfig }> = ({ config }) => {
         <BloombergDashboard
           agentMessages={agentMessages}
           onCommand={handleCommand}
+          onExit={handleExit}
           birdeyeKey={config.birdeyeKey}
           walletAddress={config.walletAddress}
         />

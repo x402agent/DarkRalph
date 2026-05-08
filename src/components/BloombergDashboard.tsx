@@ -28,6 +28,7 @@ interface BloombergDashboardProps {
   initialView?: ViewMode;
   agentMessages?: Array<{ role: string; content: string; timestamp: number }>;
   onCommand?: (command: string) => void;
+  onExit?: () => void;
   birdeyeKey?: string;  // API key for real-time data
   walletAddress?: string;
 }
@@ -40,6 +41,7 @@ export const BloombergDashboard: React.FC<BloombergDashboardProps> = ({
   initialView = 'market',
   agentMessages = [],
   onCommand,
+  onExit,
   birdeyeKey,
   walletAddress,
 }) => {
@@ -65,7 +67,7 @@ export const BloombergDashboard: React.FC<BloombergDashboardProps> = ({
   // Handle keyboard shortcuts
   useInput((input, key) => {
     if (key.escape || input === 'q') {
-      exit();
+      onExit?.() ?? exit();
     }
 
     // View switching with number keys
@@ -182,6 +184,7 @@ const BottomBar: React.FC<{ view: ViewMode; setView: (v: ViewMode) => void }> = 
 
 const MarketView: React.FC<{ width: number; apiKey?: string }> = ({ width, apiKey }) => {
   const colWidth = Math.floor((width - 6) / 3);
+  const orderDepth = width < 90 ? 2 : 6;
 
   return (
     <Box flexDirection="column" padding={1}>
@@ -191,7 +194,7 @@ const MarketView: React.FC<{ width: number; apiKey?: string }> = ({ width, apiKe
           <PriceChart width={colWidth * 2} height={12} showVolume showMA apiKey={apiKey} />
         </Box>
         <Box flexDirection="column" width={colWidth}>
-          <OrderBook depth={6} width={colWidth} />
+          <OrderBook depth={orderDepth} width={colWidth} />
         </Box>
       </Box>
 
@@ -201,10 +204,10 @@ const MarketView: React.FC<{ width: number; apiKey?: string }> = ({ width, apiKe
           <MarketHeatmap width={colWidth} apiKey={apiKey} />
         </Box>
         <Box width={colWidth}>
-          <TopMovers apiKey={apiKey} />
+          <TopMovers apiKey={apiKey} width={colWidth} />
         </Box>
         <Box width={colWidth}>
-          <AlertFeed maxItems={6} />
+          <AlertFeed maxItems={6} width={colWidth} />
         </Box>
       </Box>
 
@@ -214,7 +217,7 @@ const MarketView: React.FC<{ width: number; apiKey?: string }> = ({ width, apiKe
           <NetworkStats />
         </Box>
         <Box width={colWidth * 2 + 2}>
-          <ActivityFeed maxItems={5} />
+          <ActivityFeed maxItems={5} width={colWidth * 2 + 2} />
         </Box>
       </Box>
     </Box>
