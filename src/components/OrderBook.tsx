@@ -60,8 +60,14 @@ export const OrderBook: React.FC<OrderBookProps> = ({
   // Generate mock data if none provided
   const mockData: OrderBookData = data || generateMockOrderBook(depth);
 
-  const formatPrice = (price: number) => price.toFixed(4).padStart(10);
-  const formatSize = (size: number) => size.toFixed(2).padStart(12);
+  const compact = width < 42;
+  const showTotal = width >= 42;
+  const barWidth = compact ? 5 : 15;
+  const formatPrice = (price: number) => price.toFixed(compact ? 2 : 4).padStart(compact ? 8 : 10);
+  const formatSize = (size: number) => {
+    const value = size >= 1000 ? `${(size / 1000).toFixed(1)}K` : size.toFixed(compact ? 1 : 2);
+    return value.padStart(compact ? 7 : 12);
+  };
   const formatTotal = (total: number) => total.toFixed(2).padStart(12);
 
   // Calculate max total for depth visualization
@@ -69,7 +75,7 @@ export const OrderBook: React.FC<OrderBookProps> = ({
   const maxAskTotal = Math.max(...mockData.asks.map((a) => a.total || a.size));
 
   // Create depth bar
-  const createDepthBar = (total: number, maxTotal: number, side: 'bid' | 'ask', barWidth = 15) => {
+  const createDepthBar = (total: number, maxTotal: number, side: 'bid' | 'ask') => {
     const percentage = total / maxTotal;
     const filledChars = Math.round(percentage * barWidth);
     const emptyChars = barWidth - filledChars;
@@ -88,15 +94,15 @@ export const OrderBook: React.FC<OrderBookProps> = ({
         <Text color="greenBright" bold>
           ORDER BOOK
         </Text>
-        <Text color="cyan">{symbol}</Text>
+        {!compact && <Text color="cyan">{symbol}</Text>}
       </Box>
 
       {/* Column Headers */}
       <Box paddingX={1} marginTop={1}>
-        <Text color="gray">{'DEPTH'.padEnd(15)}</Text>
-        <Text color="gray">{'PRICE'.padStart(10)}</Text>
-        <Text color="gray">{'SIZE'.padStart(12)}</Text>
-        <Text color="gray">{'TOTAL'.padStart(12)}</Text>
+        <Text color="gray">{'DEPTH'.padEnd(barWidth)}</Text>
+        <Text color="gray">{'PRICE'.padStart(compact ? 8 : 10)}</Text>
+        <Text color="gray">{'SIZE'.padStart(compact ? 7 : 12)}</Text>
+        {showTotal && <Text color="gray">{'TOTAL'.padStart(12)}</Text>}
       </Box>
 
       <Box paddingX={1}>
@@ -115,9 +121,11 @@ export const OrderBook: React.FC<OrderBookProps> = ({
               </Text>
               <Text color={isFlashing ? 'whiteBright' : 'red'}>{formatPrice(ask.price)}</Text>
               <Text color="gray">{formatSize(ask.size)}</Text>
-              <Text color="red" dimColor>
-                {formatTotal(ask.total || ask.size)}
-              </Text>
+              {showTotal && (
+                <Text color="red" dimColor>
+                  {formatTotal(ask.total || ask.size)}
+                </Text>
+              )}
             </Box>
           );
         })}
@@ -127,8 +135,9 @@ export const OrderBook: React.FC<OrderBookProps> = ({
       {showSpread && (
         <Box paddingX={1} marginY={1} justifyContent="center">
           <Text color="yellow" bold>
-            ─── SPREAD: {mockData.spread?.toFixed(4) || '0.0001'} (
-            {mockData.spreadPercent?.toFixed(2) || '0.01'}%) ───
+            {compact
+              ? `SPREAD ${mockData.spread?.toFixed(4) || '0.0001'}`
+              : `─── SPREAD: ${mockData.spread?.toFixed(4) || '0.0001'} (${mockData.spreadPercent?.toFixed(2) || '0.01'}%) ───`}
           </Text>
         </Box>
       )}
@@ -144,9 +153,11 @@ export const OrderBook: React.FC<OrderBookProps> = ({
               </Text>
               <Text color={isFlashing ? 'whiteBright' : 'green'}>{formatPrice(bid.price)}</Text>
               <Text color="gray">{formatSize(bid.size)}</Text>
-              <Text color="green" dimColor>
-                {formatTotal(bid.total || bid.size)}
-              </Text>
+              {showTotal && (
+                <Text color="green" dimColor>
+                  {formatTotal(bid.total || bid.size)}
+                </Text>
+              )}
             </Box>
           );
         })}
@@ -155,7 +166,7 @@ export const OrderBook: React.FC<OrderBookProps> = ({
       {/* Footer */}
       <Box paddingX={1} marginTop={1} borderTop>
         <Text color="gray" dimColor>
-          Updated: {new Date().toLocaleTimeString()}
+          {compact ? new Date().toLocaleTimeString() : `Updated: ${new Date().toLocaleTimeString()}`}
         </Text>
       </Box>
     </Box>
