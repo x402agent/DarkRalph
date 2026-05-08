@@ -13,6 +13,7 @@ import boxen from 'boxen';
 import ora from 'ora';
 import { App } from './App.js';
 import { loadConfigFromEnv } from './config/schema.js';
+import { RalphAgent } from './engine/ralph-agent.js';
 import { SolanaWalletManager } from './skills/solana-wallet.js';
 
 // Load environment variables
@@ -42,6 +43,19 @@ program
   .option('--headless', 'Run without TUI (daemon mode)')
   .action(async (options) => {
     const config = loadConfigFromEnv();
+    const appConfig = {
+      heliusKey: config.apiKeys?.HELIUS_API_KEY,
+      heliusRpc: config.apiKeys?.HELIUS_RPC_URL,
+      birdeyeKey: config.apiKeys?.BIRDEYE_API_KEY,
+      grokKey: config.apiKeys?.XAI_API_KEY,
+      perplexityKey: config.apiKeys?.PERPLEXITY_API_KEY,
+      openRouterKey: config.apiKeys?.OPENROUTER_API_KEY,
+      newsApiKey: config.apiKeys?.NEWS_API_KEY,
+      serpApiKey: config.apiKeys?.SERP_API_KEY,
+      financialDatasetKey: config.apiKeys?.FINANCIAL_DATASET_API_KEY,
+      walletAddress: options.wallet || config.solana?.privateKey,
+      autoMode: !options.interactive,
+    };
 
     // Show banner
     if (!options.headless) {
@@ -86,34 +100,41 @@ ${chalk.green(`
     // Start the TUI
     if (!options.headless) {
       const { waitUntilExit } = render(
-        <App
-          config={{
-            heliusKey: config.apiKeys?.HELIUS_API_KEY,
-            heliusRpc: config.apiKeys?.HELIUS_RPC_URL,
-            birdeyeKey: config.apiKeys?.BIRDEYE_API_KEY,
-            grokKey: config.apiKeys?.XAI_API_KEY,
-            perplexityKey: config.apiKeys?.PERPLEXITY_API_KEY,
-            openRouterKey: config.apiKeys?.OPENROUTER_API_KEY,
-            newsApiKey: config.apiKeys?.NEWS_API_KEY,
-            serpApiKey: config.apiKeys?.SERP_API_KEY,
-            financialDatasetKey: config.apiKeys?.FINANCIAL_DATASET_API_KEY,
-            walletAddress: options.wallet || config.solana?.privateKey,
-            autoMode: !options.interactive,
-          }}
-        />
+        <App config={appConfig} />
       );
 
       await waitUntilExit();
     } else {
-      // Headless mode - just log
+      const agent = new RalphAgent({
+        autoMode: appConfig.autoMode,
+        recursionDepth: config.ralph?.recursionDepth ?? 5,
+        thoughtInterval: config.ralph?.thoughtInterval ?? 15000,
+        personality: config.ralph?.personality ?? 'cryptic',
+        walletAddress: appConfig.walletAddress,
+      });
+
+      agent.initServices(appConfig);
+      agent.on('message', (message) => {
+        console.log(`[${message.sender.toUpperCase()}] ${message.content}`);
+      });
+      agent.on('uptimeUpdate', (uptime) => {
+        if (uptime % 60 === 0) {
+          console.log(chalk.gray(`[HEARTBEAT] Dark Ralph alive for ${uptime}s`));
+        }
+      });
+
       console.log(chalk.green('Dark Ralph running in headless mode...'));
       console.log(chalk.gray('Press Ctrl+C to stop'));
+      await agent.start();
 
-      // Keep process alive
-      process.on('SIGINT', () => {
+      const shutdown = () => {
+        agent.stop();
         console.log(chalk.yellow('\nDark Ralph shutting down...'));
         process.exit(0);
-      });
+      };
+
+      process.once('SIGINT', shutdown);
+      process.once('SIGTERM', shutdown);
     }
   });
 
