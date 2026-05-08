@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Dark Ralph is a Bun and Ink terminal app for Solana market surveillance, wallet context, and autonomous AI analysis."
+    />
+    <title>Dark Ralph TUI</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #07080a;
+        --panel: #101318;
+        --line: #27313c;
+        --text: #eef4f2;
+        --muted: #9ba9a6;
+        --green: #39ff88;
+        --cyan: #37d4ff;
+        --red: #ff3b5c;
+        --orange: #ff9d42;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 16px/1.55 ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      }
+
+      a {
+        color: var(--cyan);
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .shell {
+        width: min(1120px, calc(100vw - 32px));
+        margin: 0 auto;
+      }
+
+      header {
+        min-height: 92vh;
+        display: grid;
+        align-content: center;
+        gap: 32px;
+        padding: 48px 0 28px;
+      }
+
+      .topline,
+      .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .brand {
+        color: var(--green);
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      .nav {
+        flex-wrap: wrap;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 980px;
+        font-size: clamp(42px, 7vw, 92px);
+        line-height: 0.95;
+        letter-spacing: 0;
+      }
+
+      .lede {
+        max-width: 760px;
+        color: var(--muted);
+        font-size: 18px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 0 16px;
+        border: 1px solid var(--line);
+        background: #121820;
+        color: var(--text);
+        border-radius: 6px;
+        font-weight: 700;
+      }
+
+      .button.primary {
+        border-color: #1bb867;
+        background: #0f2a1d;
+        color: var(--green);
+      }
+
+      .terminal {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        background: #07090c;
+        border-radius: 8px;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+      }
+
+      .bar {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 99px;
+        background: var(--red);
+      }
+
+      .dot:nth-child(2) {
+        background: var(--orange);
+      }
+
+      .dot:nth-child(3) {
+        background: var(--green);
+      }
+
+      pre {
+        margin: 0;
+        padding: 20px;
+        overflow-x: auto;
+        color: #c8f8d6;
+        font-size: 14px;
+      }
+
+      section {
+        padding: 56px 0;
+        border-top: 1px solid #151b22;
+      }
+
+      h2 {
+        margin: 0 0 18px;
+        font-size: 28px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        border-radius: 8px;
+        padding: 18px;
+      }
+
+      .card h3 {
+        margin: 0 0 10px;
+        color: var(--green);
+        font-size: 16px;
+      }
+
+      .card p,
+      .muted {
+        color: var(--muted);
+      }
+
+      code {
+        color: var(--green);
+      }
+
+      .install {
+        display: grid;
+        gap: 14px;
+      }
+
+      .command {
+        border: 1px solid var(--line);
+        background: #050607;
+        border-radius: 6px;
+        padding: 14px;
+        overflow-x: auto;
+        color: var(--green);
+      }
+
+      footer {
+        padding: 32px 0 48px;
+        color: var(--muted);
+        border-top: 1px solid #151b22;
+      }
+
+      @media (max-width: 760px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .topline {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header>
+        <div class="topline">
+          <div class="brand">CLAWD / DARK RALPH</div>
+          <nav class="nav" aria-label="Page navigation">
+            <a href="#install">Install</a>
+            <a href="#features">Features</a>
+            <a href="#commands">Commands</a>
+            <a href="#config">Config</a>
+          </nav>
+        </div>
+
+        <div>
+          <h1>Solana market surveillance from your terminal.</h1>
+          <p class="lede">
+            Dark Ralph is a Bun + Ink terminal app for live Solana market views,
+            wallet context, provider-backed research, and autonomous agent analysis.
+          </p>
+        </div>
+
+        <div class="actions">
+          <a class="button primary" href="#install">Install Dark Ralph</a>
+          <a class="button" href="https://solanaclawd.com/docs">Read Docs</a>
+        </div>
+
+        <div class="terminal" aria-label="Dark Ralph terminal preview">
+          <div class="bar">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span>MAWD Market View</span>
+          </div>
+          <pre>┌──────────────────────────────────────────────────────────────────────────────┐
+└─CLAWD │ MARKET VIEW────────────────────────────Uptime: 00:04:35 │ 8:36 AM──┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+└─SOL $150.25 +2.34% │ BONK $0.00002345 +5.67% │ WIF $2.85 -1.20% │ JUP +3.80%┘
+
+ ┌──────────────────────────────────────────────┐  ┌──────────────────────────┐
+ │ SOL/USDC │ 1H              $132.97 (-11.36%)│  │ ORDER BOOK       SOL/USDC │
+ │ 152.42  ██  ││││                           │  │ DEPTH    PRICE      SIZE  │
+ │ VOL▁▃▄▄▃▂▂▃▃▃▁▃▃▄▃▂▃▂▄▂▃▃▃▂▂▃▂▂▄▃▁▂▂▃▁   │  │ SPREAD: 0.0405          │
+ └──────────────────────────────────────────────┘  └──────────────────────────┘
+
+ ┌──────────────────────┐ ┌──────────────────────┐ ┌──────────────────────────┐
+ │ MARKET HEATMAP       │ │ TOP MOVERS           │ │ LIVE FEED          LIVE  │
+ │ SOL BONK WIF JUP     │ │ BONK +15.3%          │ │ 5,000 SOL to exchange    │
+ │ RAY ORCA MNGO SAMO   │ │ MNGO -12.5%          │ │ BONK divergence          │
+ └──────────────────────┘ └──────────────────────┘ └──────────────────────────┘</pre>
+        </div>
+      </header>
+
+      <section id="install">
+        <h2>Install And Start</h2>
+        <div class="install">
+          <div class="command">curl -fsSL https://install.solanaclawd.com | bash<br />ralph</div>
+          <p class="muted">
+            The installer detects macOS/Linux architecture, installs the Clawd command
+            set into <code>~/.local/bin</code>, and creates shared config at
+            <code>~/.clawd/config.env</code>.
+          </p>
+          <div class="command">export PATH="$HOME/.local/bin:$PATH"<br />ralph</div>
+        </div>
+      </section>
+
+      <section id="features">
+        <h2>Features</h2>
+        <div class="grid">
+          <article class="card">
+            <h3>MAWD Market View</h3>
+            <p>Live ticker tape, chart, order book, heatmap, top movers, live feed, network stats, and activity stream.</p>
+          </article>
+          <article class="card">
+            <h3>Agent Loop</h3>
+            <p>RalphAgent supports autonomous and interactive modes with recursive market thoughts and command handling.</p>
+          </article>
+          <article class="card">
+            <h3>Provider Context</h3>
+            <p>Connect Helius, Birdeye, xAI Grok, Perplexity, OpenRouter, News API, SERP API, and Financial Datasets.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="commands">
+        <h2>Local Development</h2>
+        <div class="command">cd dark-ralph<br />bun install<br />cp .env.example .env<br />bun run run</div>
+        <div class="grid" style="margin-top: 16px">
+          <article class="card">
+            <h3>TUI</h3>
+            <p><code>bun run run</code><br /><code>bun run src/cli.tsx run --interactive</code></p>
+          </article>
+          <article class="card">
+            <h3>Daemon</h3>
+            <p><code>bun run src/cli.tsx run --headless</code></p>
+          </article>
+          <article class="card">
+            <h3>Wallet</h3>
+            <p><code>bun run wallet -- --create</code><br /><code>bun run wallet -- --balance</code></p>
+          </article>
+        </div>
+      </section>
+
+      <section id="config">
+        <h2>Configuration</h2>
+        <p class="muted">
+          Dark Ralph starts without every key configured. Missing providers appear
+          disconnected and dependent commands fail closed.
+        </p>
+        <div class="command">HELIUS_API_KEY=<br />BIRDEYE_API_KEY=<br />XAI_API_KEY=<br />PERPLEXITY_API_KEY=<br />OPENROUTER_API_KEY=</div>
+      </section>
+    </main>
+
+    <footer class="shell">
+      Dark Ralph TUI. Built with Bun, Ink, React, Solana Web3.js, Zod, and Commander.
+    </footer>
+  </body>
+</html>
