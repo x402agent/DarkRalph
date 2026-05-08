@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
+  <title id="title">Dark Ralph cypherpunk terminal</title>
+  <desc id="desc">Animated cypherpunk lobsters coding at a dark terminal with market and agent signals.</desc>
+  <defs>
+    <linearGradient id="screen" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#05070c"/>
+      <stop offset="55%" stop-color="#081611"/>
+      <stop offset="100%" stop-color="#13040a"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <style>
+      .bg { fill: #020309; }
+      .panel { fill: url(#screen); stroke: #19ff9a; stroke-width: 2; }
+      .dim { fill: #5f7a73; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .green { fill: #19ff9a; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .red { fill: #ff3864; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .cyan { fill: #36d7ff; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .gold { fill: #ffd166; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .title { font-size: 54px; font-weight: 800; letter-spacing: 3px; }
+      .small { font-size: 19px; }
+      .tiny { font-size: 15px; }
+      .lobster { font-size: 58px; filter: url(#glow); }
+      .cursor { animation: blink 1s steps(2, start) infinite; }
+      .scan { fill: rgba(25,255,154,0.08); animation: scan 4.2s linear infinite; }
+      .pulse { animation: pulse 2.6s ease-in-out infinite; }
+      .type1 { animation: type1 6s steps(24, end) infinite; }
+      .type2 { animation: type2 6s steps(22, end) infinite; }
+      .float1 { animation: float1 4s ease-in-out infinite; }
+      .float2 { animation: float2 4.6s ease-in-out infinite; }
+      .bar1 { animation: bar1 2.2s ease-in-out infinite; }
+      .bar2 { animation: bar2 2.8s ease-in-out infinite; }
+      .bar3 { animation: bar3 2.4s ease-in-out infinite; }
+      @keyframes blink { 50% { opacity: 0; } }
+      @keyframes scan { from { transform: translateY(-110px); } to { transform: translateY(430px); } }
+      @keyframes pulse { 50% { opacity: .45; } }
+      @keyframes float1 { 50% { transform: translateY(-10px) rotate(-2deg); } }
+      @keyframes float2 { 50% { transform: translateY(8px) rotate(2deg); } }
+      @keyframes type1 { 0%, 15% { clip-path: inset(0 100% 0 0); } 55%, 100% { clip-path: inset(0 0 0 0); } }
+      @keyframes type2 { 0%, 35% { clip-path: inset(0 100% 0 0); } 75%, 100% { clip-path: inset(0 0 0 0); } }
+      @keyframes bar1 { 50% { height: 72px; y: 244px; } }
+      @keyframes bar2 { 50% { height: 38px; y: 278px; } }
+      @keyframes bar3 { 50% { height: 88px; y: 228px; } }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="420"/>
+  <circle cx="102" cy="82" r="66" fill="#10251d" opacity=".55"/>
+  <circle cx="1088" cy="330" r="92" fill="#250816" opacity=".5"/>
+  <rect x="76" y="48" width="1048" height="324" rx="18" class="panel"/>
+  <rect x="101" y="76" width="998" height="270" rx="10" fill="#03070a" stroke="#13352b"/>
+  <rect x="101" y="76" width="998" height="32" fill="#07130f"/>
+  <circle cx="124" cy="92" r="6" fill="#ff3864"/>
+  <circle cx="146" cy="92" r="6" fill="#ffd166"/>
+  <circle cx="168" cy="92" r="6" fill="#19ff9a"/>
+  <text x="205" y="99" class="dim tiny">/dark-ralph :: mawd-market-view :: agent loop attached</text>
+  <rect x="101" y="108" width="998" height="4" fill="#19ff9a" opacity=".18"/>
+  <rect x="101" y="108" width="998" height="24" class="scan"/>
+
+  <g transform="translate(148 158)" class="float1">
+    <text x="0" y="0" class="lobster">🦞</text>
+    <text x="-17" y="35" class="green tiny">&lt;agent writes&gt;</text>
+  </g>
+  <g transform="translate(978 168)" class="float2">
+    <text x="0" y="0" class="lobster">🦞</text>
+    <text x="-55" y="35" class="red tiny">keys rotate</text>
+  </g>
+
+  <text x="250" y="165" class="green title pulse">DARK RALPH</text>
+  <text x="254" y="198" class="cyan small">cypherpunk Solana intelligence terminal</text>
+
+  <text x="252" y="242" class="green small type1">$ bun run src/cli.tsx run --auto</text>
+  <text x="252" y="274" class="gold small type2">RALPH: scanning orderflow, news, wallets, and chain noise</text>
+  <text x="252" y="306" class="cyan small">MAWD&gt; market view online <tspan class="cursor">█</tspan></text>
+
+  <g transform="translate(810 232)">
+    <rect x="0" y="84" width="18" height="34" fill="#19ff9a" opacity=".85" class="bar1"/>
+    <rect x="30" y="50" width="18" height="68" fill="#36d7ff" opacity=".8" class="bar2"/>
+    <rect x="60" y="72" width="18" height="46" fill="#ff3864" opacity=".85" class="bar3"/>
+    <rect x="90" y="36" width="18" height="82" fill="#ffd166" opacity=".85" class="bar1"/>
+    <rect x="120" y="62" width="18" height="56" fill="#19ff9a" opacity=".85" class="bar2"/>
+    <line x1="0" y1="118" x2="150" y2="118" stroke="#5f7a73"/>
+    <text x="-4" y="146" class="dim tiny">SOL / BONK / WIF / JUP</text>
+  </g>
+
+  <text x="126" y="334" class="dim tiny">HELIUS linked</text>
+  <text x="260" y="334" class="dim tiny">BIRDEYE linked</text>
+  <text x="414" y="334" class="dim tiny">OPENROUTER linked</text>
+  <text x="610" y="334" class="dim tiny">CLOUDFLARE edge</text>
+  <text x="786" y="334" class="dim tiny">ANCHOR staking</text>
+  <text x="950" y="334" class="dim tiny">AUTOMATON awake</text>
+</svg>
