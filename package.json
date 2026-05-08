@@ -20,7 +20,7 @@
     "wallet": "bun run src/cli.tsx wallet",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/**/*.{ts,tsx}",
-    "test": "bun test",
+    "test": "bun test ./src",
     "clean": "rm -rf dist",
     "prepublishOnly": "bun run build && bun run build:lib"
   },
@@ -55,15 +55,16 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/react": "^18.2.37",
     "@types/figlet": "^1.5.8",
     "@types/gradient-string": "^1.1.5",
+    "@types/react": "^18.2.37",
     "@types/ws": "^8.5.10",
-    "typescript": "^5.3.2",
-    "eslint": "^8.54.0",
     "@typescript-eslint/eslint-plugin": "^6.12.0",
     "@typescript-eslint/parser": "^6.12.0",
-    "bun-types": "latest"
+    "bun-types": "latest",
+    "eslint": "^8.54.0",
+    "react-devtools-core": "^7.0.1",
+    "typescript": "^5.3.2"
   },
   "keywords": [
     "solana",
