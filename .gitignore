@@ -39,3 +39,4 @@ __pycache__/
 *.swp
 /clawd-code-cli
 .vercel
+dark defi terminal/
