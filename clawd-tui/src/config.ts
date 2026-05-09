@@ -60,6 +60,11 @@ export interface AgentConfig {
   requireApproval: string[];
   loaderText: string;
   birdeyeApiKey: string;
+  financialDatasetApiKey: string;
+  dflowApiKey: string;
+  dflowQuoteApiUrl: string;
+  dflowPredictionApiUrl: string;
+  darkDefiTerminalPath: string;
   heliusApiKey: string;
   heliusRpcUrl: string;
   researchApiUrl: string;
@@ -94,6 +99,11 @@ const DEFAULTS: AgentConfig = {
   requireApproval: ['shell', 'file_write', 'file_edit'],
   loaderText: 'Clawing',
   birdeyeApiKey: '',
+  financialDatasetApiKey: '',
+  dflowApiKey: '',
+  dflowQuoteApiUrl: 'https://quote-api.dflow.net',
+  dflowPredictionApiUrl: 'https://prediction-markets-api.dflow.net',
+  darkDefiTerminalPath: '/Users/8bit/Downloads/clawd-terminal/dark-ralph/dark defi terminal',
   heliusApiKey: '',
   heliusRpcUrl: '',
   researchApiUrl: '',
@@ -120,6 +130,12 @@ export function loadConfig(overrides: Partial<AgentConfig> = {}): AgentConfig {
   if (process.env.AGENT_MAX_STEPS) config.maxSteps = Number(process.env.AGENT_MAX_STEPS);
   if (process.env.AGENT_MAX_COST) config.maxCost = Number(process.env.AGENT_MAX_COST);
   if (process.env.BIRDEYE_API_KEY) config.birdeyeApiKey = process.env.BIRDEYE_API_KEY;
+  if (process.env.FINANCIALDATASET_API_KEY) config.financialDatasetApiKey = process.env.FINANCIALDATASET_API_KEY;
+  if (process.env.FINANCIAL_DATASETS_API_KEY) config.financialDatasetApiKey = process.env.FINANCIAL_DATASETS_API_KEY;
+  if (process.env.DFLOW_API_KEY) config.dflowApiKey = process.env.DFLOW_API_KEY;
+  if (process.env.DFLOW_QUOTE_API_URL) config.dflowQuoteApiUrl = process.env.DFLOW_QUOTE_API_URL;
+  if (process.env.DFLOW_PREDICTION_API_URL) config.dflowPredictionApiUrl = process.env.DFLOW_PREDICTION_API_URL;
+  if (process.env.DARK_DEFI_TERMINAL_PATH) config.darkDefiTerminalPath = process.env.DARK_DEFI_TERMINAL_PATH;
   if (process.env.HELIUS_API_KEY) config.heliusApiKey = process.env.HELIUS_API_KEY;
   if (process.env.HELIUS_RPC_URL) config.heliusRpcUrl = process.env.HELIUS_RPC_URL;
   if (process.env.RESEARCH_API_URL) config.researchApiUrl = process.env.RESEARCH_API_URL;

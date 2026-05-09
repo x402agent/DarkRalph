@@ -5,6 +5,8 @@ import type {
   WalletPortfolioItem,
   SearchTokenItem,
 } from './birdeye.js';
+import type { PriceSnapshot, HistoricalPrice } from './financialdatasets.js';
+import type { DFlowMarket, DFlowOrderQuote, DFlowTrade } from './dflow.js';
 
 const RESET = '\x1b[0m';
 const BOLD = '\x1b[1m';
@@ -49,6 +51,11 @@ function shortAddr(a: string): string {
 
 function row(label: string, value: string): string {
   return `  ${DIM}${label.padEnd(11)}${RESET}${value}`;
+}
+
+function plainPct(n: number | undefined | null): string {
+  if (n == null || !isFinite(n)) return '—';
+  return `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
 }
 
 export function formatTokenOverview(t: TokenOverview): string {
@@ -163,4 +170,116 @@ export function formatNetworth(summary: PortfolioSummary): string {
 
 export function formatError(prefix: string, message: string): string {
   return `\n  ${RED}error${RESET} ${DIM}${prefix}: ${message}${RESET}\n`;
+}
+
+export function formatStockSnapshot(s: PriceSnapshot): string {
+  const price = s.price ?? s.day?.close;
+  const change = s.changePercent ?? (
+    s.previousClose && price ? ((price - s.previousClose) / s.previousClose) * 100 : undefined
+  );
+  const lines: string[] = [];
+  lines.push(`\n  ${BOLD}Market Snapshot${RESET}  ${ORANGE}${s.ticker}${RESET} ${DIM}(Financial Datasets)${RESET}`);
+  lines.push(row('price', `${BOLD}${compactUsd(price)}${RESET}  ${pct(change)}`));
+  lines.push(row('session', `${DIM}open${RESET} ${compactUsd(s.day?.open)}  ${DIM}high${RESET} ${compactUsd(s.day?.high)}  ${DIM}low${RESET} ${compactUsd(s.day?.low)}`));
+  lines.push(row('volume', compactNum(s.day?.volume)));
+  lines.push(row('time', `${s.time ?? s.timestamp ?? 'latest'}`));
+  lines.push('');
+  return lines.join('\n');
+}
+
+export function formatHistoricalPrices(ticker: string, prices: HistoricalPrice[], limit = 8): string {
+  const lines: string[] = [];
+  lines.push(`\n  ${BOLD}${ticker.toUpperCase()} history${RESET} ${DIM}(Financial Datasets)${RESET}`);
+  if (prices.length === 0) {
+    lines.push(`  ${DIM}no price rows returned${RESET}\n`);
+    return lines.join('\n');
+  }
+  lines.push(`  ${DIM}${'date'.padEnd(12)} ${'open'.padStart(10)} ${'close'.padStart(10)} ${'chg'.padStart(8)} ${'vol'.padStart(10)}${RESET}`);
+  for (const p of prices.slice(-limit)) {
+    const change = p.open ? ((p.close - p.open) / p.open) * 100 : undefined;
+    lines.push(
+      `  ${(p.time ?? '').padEnd(12)} ${compactUsd(p.open).padStart(10)} ${compactUsd(p.close).padStart(10)} ${plainPct(change).padStart(8)} ${compactNum(p.volume).padStart(10)}`,
+    );
+  }
+  lines.push('');
+  return lines.join('\n');
+}
+
+export function formatDFlowMarkets(markets: DFlowMarket[], limit = 8): string {
+  const lines: string[] = [];
+  lines.push(`\n  ${BOLD}DFlow Prediction Markets${RESET} ${DIM}(active, volume-ranked)${RESET}`);
+  if (markets.length === 0) {
+    lines.push(`  ${DIM}no active markets returned${RESET}\n`);
+    return lines.join('\n');
+  }
+  lines.push(`  ${DIM}${'ticker'.padEnd(18)} ${'yes'.padStart(11)} ${'no'.padStart(11)} ${'vol'.padStart(10)}  title${RESET}`);
+  for (const m of markets.slice(0, limit)) {
+    const yes = `${m.yesBid ?? '—'}/${m.yesAsk ?? '—'}`.padStart(11);
+    const no = `${m.noBid ?? '—'}/${m.noAsk ?? '—'}`.padStart(11);
+    const title = `${m.title ?? m.subtitle ?? ''}`.slice(0, 64);
+    lines.push(`  ${ORANGE}${m.ticker.padEnd(18).slice(0, 18)}${RESET} ${yes} ${no} ${compactUsd(m.volume24h ?? m.volume).padStart(10)}  ${title}`);
+  }
+  lines.push('');
+  return lines.join('\n');
+}
+
+export function formatDFlowTrades(trades: DFlowTrade[], limit = 8): string {
+  const lines: string[] = [];
+  lines.push(`\n  ${BOLD}DFlow Recent Trades${RESET}`);
+  if (trades.length === 0) {
+    lines.push(`  ${DIM}no trades returned${RESET}\n`);
+    return lines.join('\n');
+  }
+  for (const t of trades.slice(0, limit)) {
+    const side = t.takerSide ? `${DIM}${t.takerSide}${RESET}` : '';
+    const yes = t.yesPriceDollars ? `${GREEN}yes ${t.yesPriceDollars}${RESET}` : '';
+    const no = t.noPriceDollars ? `${RED}no ${t.noPriceDollars}${RESET}` : '';
+    const when = t.createdTime ? new Date(t.createdTime * 1000).toISOString().slice(11, 19) : '';
+    lines.push(`  ${ORANGE}${t.ticker}${RESET} ${side} ${yes} ${no} ${DIM}${compactNum(t.count)} @ ${when}${RESET}`);
+  }
+  lines.push('');
+  return lines.join('\n');
+}
+
+export function formatDFlowQuote(q: DFlowOrderQuote, inputDecimals = 9, outputDecimals = 6): string {
+  const inAmount = Number(q.inAmount) / 10 ** inputDecimals;
+  const outAmount = Number(q.outAmount) / 10 ** outputDecimals;
+  const route = (q.routePlan ?? []).map((r) => r.venue).filter(Boolean).join(' -> ') || 'route';
+  const lines: string[] = [];
+  lines.push(`\n  ${BOLD}DFlow SOL/USDC Quote${RESET}`);
+  lines.push(row('input', `${compactNum(inAmount)} SOL`));
+  lines.push(row('output', `${BOLD}${compactNum(outAmount)} USDC${RESET}`));
+  lines.push(row('impact', `${q.priceImpactPct ?? '—'}${q.priceImpactPct?.includes('%') ? '' : '%'}`));
+  lines.push(row('priority', `${compactNum(q.prioritizationFeeLamports)} lamports`));
+  lines.push(row('route', `${DIM}${route}${RESET}`));
+  lines.push('');
+  return lines.join('\n');
+}
+
+export function formatMarketPulse(parts: {
+  sol?: TokenOverview;
+  clawd?: TokenOverview;
+  stocks?: PriceSnapshot[];
+  dflowMarkets?: DFlowMarket[];
+  errors?: string[];
+}): string {
+  const lines: string[] = [];
+  lines.push(`\n  ${BOLD}${ORANGE}OpenClawd Market Pulse${RESET} ${DIM}${new Date().toLocaleTimeString()}${RESET}`);
+  if (parts.sol) {
+    lines.push(`  ${ORANGE}SOL${RESET} ${BOLD}${compactUsd(parts.sol.price)}${RESET}  1h ${pct(parts.sol.priceChange1hPercent)}  24h ${pct(parts.sol.priceChange24hPercent)}  ${DIM}liq${RESET} ${compactUsd(parts.sol.liquidity)}`);
+  }
+  if (parts.clawd) {
+    lines.push(`  ${ORANGE}$CLAWD${RESET} ${BOLD}${compactUsd(parts.clawd.price)}${RESET}  24h ${pct(parts.clawd.priceChange24hPercent)}  ${DIM}mcap${RESET} ${compactUsd(parts.clawd.marketCap)}  ${DIM}liq${RESET} ${compactUsd(parts.clawd.liquidity)}`);
+  }
+  for (const s of parts.stocks ?? []) {
+    const price = s.price ?? s.day?.close;
+    const change = s.changePercent ?? (s.previousClose && price ? ((price - s.previousClose) / s.previousClose) * 100 : undefined);
+    lines.push(`  ${CYAN}${s.ticker.padEnd(5)}${RESET} ${BOLD}${compactUsd(price)}${RESET}  ${pct(change)} ${DIM}${s.time ?? s.timestamp ?? ''}${RESET}`);
+  }
+  for (const m of (parts.dflowMarkets ?? []).slice(0, 3)) {
+    lines.push(`  ${YELLOW}${m.ticker}${RESET} ${DIM}yes${RESET} ${m.yesBid ?? '—'}/${m.yesAsk ?? '—'} ${DIM}vol${RESET} ${compactUsd(m.volume24h ?? m.volume)}  ${(m.title ?? '').slice(0, 52)}`);
+  }
+  for (const e of parts.errors ?? []) lines.push(`  ${RED}warn${RESET} ${DIM}${e}${RESET}`);
+  lines.push('');
+  return lines.join('\n');
 }

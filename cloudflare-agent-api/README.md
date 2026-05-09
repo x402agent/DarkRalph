@@ -30,10 +30,13 @@ cd cloudflare-agent-api
 npm install
 ```
 
-### 3. Create D1 Database
+### 3. Verify or Create D1 Database
 
 ```bash
-# Create the database
+# Check whether agent-db already exists
+wrangler d1 list
+
+# Only create it if it is not already listed
 wrangler d1 create agent-db
 
 # You'll get output like:
@@ -49,13 +52,16 @@ wrangler d1 create agent-db
 
 ```bash
 # Create Sessions KV
-wrangler kv:namespace create SESSIONS
+wrangler kv namespace create SESSIONS
 
 # Create Rate Limits KV
-wrangler kv:namespace create RATE_LIMITS
+wrangler kv namespace create RATE_LIMITS
 
 # Copy the IDs to wrangler.toml
 ```
+
+Wrangler 4 uses `wrangler kv namespace ...`. The old `wrangler kv:namespace ...`
+form is no longer accepted.
 
 ### 5. Update wrangler.toml
 
@@ -79,8 +85,11 @@ id = "YOUR_ACTUAL_RATE_LIMITS_KV_ID"
 ### 6. Run Database Migration
 
 ```bash
-# Apply schema to D1
-wrangler d1 execute agent-db --file=./schema.sql
+# Apply schema to the remote production D1 database
+wrangler d1 execute agent-db --remote --file=./schema.sql
+
+# For local development only
+wrangler d1 execute agent-db --local --file=./schema.sql
 ```
 
 ### 7. Set Secrets
@@ -312,9 +321,16 @@ wrangler secret put CROSSMINT_SERVERSIDE_API_KEY
 ```
 
 ### "D1 database not found"
-Make sure you've created the database and updated the ID in wrangler.toml:
+Make sure the database exists and the ID in `wrangler.toml` matches:
 ```bash
-wrangler d1 create agent-db
+wrangler d1 list
+```
+
+If `agent-db` is already listed, do not create it again. Copy its UUID into the
+`database_id` field, then run:
+
+```bash
+wrangler d1 execute agent-db --remote --file=./schema.sql
 ```
 
 ### "Rate limit exceeded"

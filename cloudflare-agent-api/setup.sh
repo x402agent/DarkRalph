@@ -38,12 +38,12 @@ DB_ID=$(echo "$DB_OUTPUT" | grep -o 'database_id = "[^"]*"' | cut -d'"' -f2)
 
 if [ -z "$DB_ID" ]; then
     echo "⚠️  Database may already exist. Trying to get existing ID..."
-    DB_ID=$(wrangler d1 list | grep agent-db | awk '{print $1}' || echo "")
+    DB_ID=$(wrangler d1 list --json | node -e "let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>{const db=JSON.parse(s).find(d=>d.name==='agent-db'); if (db) console.log(db.uuid || db.id);})" || echo "")
 fi
 
 if [ -z "$DB_ID" ]; then
     echo "❌ Could not get database ID. Please create manually:"
-    echo "   wrangler d1 create agent-db"
+    echo "   wrangler d1 list --json"
     exit 1
 fi
 
@@ -53,23 +53,23 @@ echo ""
 echo "📦 Creating KV Namespaces..."
 
 # Create Sessions KV
-SESSIONS_OUTPUT=$(wrangler kv:namespace create SESSIONS 2>&1 || true)
+SESSIONS_OUTPUT=$(wrangler kv namespace create SESSIONS 2>&1 || true)
 SESSIONS_ID=$(echo "$SESSIONS_OUTPUT" | grep -o 'id = "[^"]*"' | cut -d'"' -f2)
 
 if [ -z "$SESSIONS_ID" ]; then
     echo "⚠️  Sessions KV may already exist. Trying to get existing ID..."
-    SESSIONS_ID=$(wrangler kv:namespace list | grep -A1 "SESSIONS" | grep id | awk -F'"' '{print $4}' || echo "")
+    SESSIONS_ID=$(wrangler kv namespace list | node -e "let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>{const ns=JSON.parse(s).find(n=>n.title==='agent-api-SESSIONS' || n.title==='SESSIONS'); if (ns) console.log(ns.id);})" || echo "")
 fi
 
 echo "✅ Sessions KV ID: $SESSIONS_ID"
 
 # Create Rate Limits KV
-RATE_OUTPUT=$(wrangler kv:namespace create RATE_LIMITS 2>&1 || true)
+RATE_OUTPUT=$(wrangler kv namespace create RATE_LIMITS 2>&1 || true)
 RATE_ID=$(echo "$RATE_OUTPUT" | grep -o 'id = "[^"]*"' | cut -d'"' -f2)
 
 if [ -z "$RATE_ID" ]; then
     echo "⚠️  Rate Limits KV may already exist. Trying to get existing ID..."
-    RATE_ID=$(wrangler kv:namespace list | grep -A1 "RATE_LIMITS" | grep id | awk -F'"' '{print $4}' || echo "")
+    RATE_ID=$(wrangler kv namespace list | node -e "let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>{const ns=JSON.parse(s).find(n=>n.title==='agent-api-RATE_LIMITS' || n.title==='RATE_LIMITS'); if (ns) console.log(ns.id);})" || echo "")
 fi
 
 echo "✅ Rate Limits KV ID: $RATE_ID"
@@ -96,7 +96,7 @@ echo "✅ wrangler.toml updated"
 
 echo ""
 echo "🗃️  Running database migration..."
-wrangler d1 execute agent-db --file=./schema.sql
+wrangler d1 execute agent-db --remote --file=./schema.sql
 
 echo ""
 echo "🔑 Setting up secrets..."

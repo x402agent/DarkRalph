@@ -9,7 +9,16 @@ import {
   formatNetworth,
   formatError,
   summarizePortfolio,
+  formatStockSnapshot,
+  formatHistoricalPrices,
+  formatDFlowMarkets,
+  formatDFlowTrades,
+  formatDFlowQuote,
+  formatMarketPulse,
 } from './format-token.js';
+import { FinancialDatasetsClient } from './financialdatasets.js';
+import { DFlowClient, SOL_MINT, USDC_MINT } from './dflow.js';
+import { darkDefiPaths, getDarkDefiStatus, runDarkDefiScript } from './dark-defi.js';
 import { HeliusClient } from './helius.js';
 import {
   formatAsset,
@@ -35,6 +44,7 @@ const BOLD = '\x1b[1m';
 const DIM = '\x1b[2m';
 const ORANGE = '\x1b[38;5;215m';
 const GRAY = '\x1b[90m';
+const CLAWD_MINT = '8cHzQHUS2s2h8TzCmfqPKYiM4dSt4roa3n7MyRLApump';
 
 export interface CommandContext {
   config: AgentConfig;
@@ -72,6 +82,76 @@ function helius(ctx: CommandContext): HeliusClient | null {
   });
 }
 
+function financial(ctx: CommandContext): FinancialDatasetsClient | null {
+  if (!ctx.config.financialDatasetApiKey) {
+    process.stdout.write(formatError('financialdatasets', 'FINANCIALDATASET_API_KEY is not set. Add it to .env'));
+    return null;
+  }
+  return new FinancialDatasetsClient({ apiKey: ctx.config.financialDatasetApiKey });
+}
+
+function dflow(ctx: CommandContext): DFlowClient {
+  return new DFlowClient({
+    apiKey: ctx.config.dflowApiKey,
+    quoteBaseUrl: ctx.config.dflowQuoteApiUrl,
+    predictionBaseUrl: ctx.config.dflowPredictionApiUrl,
+  });
+}
+
+function isoDateOffset(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+async function printMarketPulse(ctx: CommandContext, stocks: string[]): Promise<void> {
+  const errors: string[] = [];
+  const solPromise = ctx.config.birdeyeApiKey
+    ? new BirdeyeClient({ apiKey: ctx.config.birdeyeApiKey }).tokenOverview(SOL_MINT).catch((e) => {
+        errors.push(`Birdeye SOL: ${(e as Error).message}`);
+        return undefined;
+      })
+    : Promise.resolve(undefined);
+  const clawdPromise = ctx.config.birdeyeApiKey
+    ? new BirdeyeClient({ apiKey: ctx.config.birdeyeApiKey }).tokenOverview(CLAWD_MINT).catch((e) => {
+        errors.push(`Birdeye $CLAWD: ${(e as Error).message}`);
+        return undefined;
+      })
+    : Promise.resolve(undefined);
+  const stockPromise = ctx.config.financialDatasetApiKey
+    ? Promise.all(
+        stocks.map((ticker) =>
+          new FinancialDatasetsClient({ apiKey: ctx.config.financialDatasetApiKey })
+            .snapshot(ticker)
+            .catch((e) => {
+              errors.push(`Financial Datasets ${ticker}: ${(e as Error).message}`);
+              return undefined;
+            }),
+        ),
+      )
+    : Promise.resolve([]);
+  const dflowPromise = dflow(ctx)
+    .markets(3)
+    .catch((e) => {
+      errors.push(`DFlow markets: ${(e as Error).message}`);
+      return [];
+    });
+
+  const [sol, clawd, stockRows, dflowMarkets] = await Promise.all([
+    solPromise,
+    clawdPromise,
+    stockPromise,
+    dflowPromise,
+  ]);
+  process.stdout.write(formatMarketPulse({
+    sol,
+    clawd,
+    stocks: stockRows.filter((s): s is NonNullable<typeof s> => Boolean(s)),
+    dflowMarkets,
+    errors,
+  }));
+}
+
 function research(ctx: CommandContext): ResearchClient {
   return new ResearchClient({
     baseUrl: ctx.config.researchApiUrl || 'http://localhost:8000',
@@ -94,6 +174,29 @@ function previewJson(value: unknown, max = 1200): string {
   const text = JSON.stringify(value, null, 2);
   if (text.length <= max) return text;
   return `${text.slice(0, max)}\n${DIM}…(${text.length - max} chars truncated; persisted to research_runs)${RESET}`;
+}
+
+function printDarkDefiStatus(ctx: CommandContext): void {
+  const s = getDarkDefiStatus(ctx.config.darkDefiTerminalPath);
+  console.log(`\n  ${BOLD}${ORANGE}Dark DeFi Terminal Bridge${RESET}`);
+  console.log(`  ${DIM}root      ${RESET}${s.root}`);
+  console.log(`  ${DIM}exists    ${RESET}${s.exists ? 'yes' : 'no'}`);
+  console.log(`  ${DIM}terminal  ${RESET}${s.terminalExists ? s.terminalPackageName ?? 'yes' : 'missing'}`);
+  console.log(`  ${DIM}protocol  ${RESET}${s.protocolExists ? 'present' : 'missing'}`);
+  console.log(`  ${DIM}sdk       ${RESET}${s.sdkExists ? 'present' : 'missing'}`);
+  console.log(`  ${DIM}docs      ${RESET}${s.docsExists ? 'present' : 'missing'}`);
+  console.log(`  ${DIM}env       ${RESET}root=${s.hasRootEnv ? 'present' : 'missing'} terminal=${s.hasTerminalEnv ? 'present' : 'missing'}`);
+  console.log(`  ${DIM}safe note ${RESET}credential files are intentionally not read or printed\n`);
+}
+
+function printDarkDefiDocs(ctx: CommandContext): void {
+  const p = darkDefiPaths(ctx.config.darkDefiTerminalPath);
+  console.log(`\n  ${BOLD}${ORANGE}Dark DeFi Docs${RESET}`);
+  console.log(`  ${DIM}quickstart ${RESET}${p.quickstart}`);
+  console.log(`  ${DIM}x402       ${RESET}${p.x402}`);
+  console.log(`  ${DIM}terminal   ${RESET}${p.terminalReadme}`);
+  console.log(`  ${DIM}architecture${RESET}${p.architecture}`);
+  console.log(`  ${DIM}local guide${RESET} ${ctx.config.darkDefiTerminalPath}/docs\n`);
 }
 
 const COMMANDS: Command[] = [
@@ -159,6 +262,138 @@ const COMMANDS: Command[] = [
         process.stdout.write(formatTrending(items, limit));
       } catch (err) {
         process.stdout.write(formatError('/trending', (err as Error).message));
+      }
+      return { handled: true };
+    },
+  },
+  {
+    name: '/markets',
+    description: 'Live OpenClawd market pulse: SOL, $CLAWD, equities, DFlow (usage: /markets [tickers])',
+    async run(ctx, args) {
+      const stocks = (args.length ? args : ['SPY', 'QQQ', 'NVDA', 'COIN']).map((s) => s.toUpperCase());
+      await printMarketPulse(ctx, stocks);
+      return { handled: true };
+    },
+  },
+  {
+    name: '/live',
+    description: 'Refresh market pulse for a bounded loop (usage: /live [seconds] [ticks])',
+    async run(ctx, args) {
+      const seconds = Math.min(60, Math.max(3, Number(args[0]) || 10));
+      const ticks = Math.min(120, Math.max(1, Number(args[1]) || 12));
+      const stocks = ['SPY', 'QQQ', 'NVDA', 'COIN'];
+      console.log(`\n  ${DIM}live market pulse every ${seconds}s for ${ticks} ticks. Ctrl-C exits immediately.${RESET}`);
+      for (let i = 0; i < ticks; i++) {
+        await printMarketPulse(ctx, stocks);
+        if (i < ticks - 1) await new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+      }
+      return { handled: true };
+    },
+  },
+  {
+    name: '/quote',
+    description: 'Real-time stock/ETF snapshot (usage: /quote <ticker>)',
+    async run(ctx, args) {
+      if (args.length === 0) {
+        console.log(`\n  ${DIM}usage: /quote <ticker>${RESET}\n`);
+        return { handled: true };
+      }
+      const client = financial(ctx);
+      if (!client) return { handled: true };
+      try {
+        const data = await client.snapshot(args[0]);
+        process.stdout.write(formatStockSnapshot(data));
+      } catch (err) {
+        process.stdout.write(formatError('/quote', (err as Error).message));
+      }
+      return { handled: true };
+    },
+  },
+  {
+    name: '/history',
+    description: 'Historical stock/ETF prices (usage: /history <ticker> [days])',
+    async run(ctx, args) {
+      if (args.length === 0) {
+        console.log(`\n  ${DIM}usage: /history <ticker> [days]${RESET}\n`);
+        return { handled: true };
+      }
+      const client = financial(ctx);
+      if (!client) return { handled: true };
+      const days = Math.min(365, Math.max(2, Number(args[1]) || 14));
+      try {
+        const prices = await client.historical(args[0], isoDateOffset(-days), isoDateOffset(0));
+        process.stdout.write(formatHistoricalPrices(args[0], prices));
+      } catch (err) {
+        process.stdout.write(formatError('/history', (err as Error).message));
+      }
+      return { handled: true };
+    },
+  },
+  {
+    name: '/dflow',
+    description: 'DFlow markets, trades, venues, or SOL/USDC quote (usage: /dflow <markets|trades|venues|quote>)',
+    async run(ctx, args) {
+      const sub = args[0] ?? 'markets';
+      const client = dflow(ctx);
+      try {
+        if (sub === 'markets') {
+          const markets = await client.markets(Math.min(25, Math.max(1, Number(args[1]) || 8)));
+          process.stdout.write(formatDFlowMarkets(markets));
+        } else if (sub === 'trades') {
+          const trades = await client.trades(Math.min(50, Math.max(1, Number(args[1]) || 8)));
+          process.stdout.write(formatDFlowTrades(trades));
+        } else if (sub === 'venues') {
+          const venues = await client.venues();
+          console.log(`\n  ${BOLD}DFlow venues${RESET} ${DIM}(${venues.length})${RESET}`);
+          console.log(`  ${ORANGE}${venues.join(`${RESET}, ${ORANGE}`)}${RESET}\n`);
+        } else if (sub === 'tokens') {
+          const tokens = await client.tokensWithDecimals();
+          console.log(`\n  ${BOLD}DFlow token universe${RESET} ${DIM}${tokens.length} mints with decimals${RESET}`);
+          for (const [mint, decimals] of tokens.slice(0, 20)) console.log(`  ${ORANGE}${mint}${RESET} ${DIM}${decimals} decimals${RESET}`);
+          if (tokens.length > 20) console.log(`  ${DIM}...${tokens.length - 20} more${RESET}`);
+          console.log('');
+        } else if (sub === 'quote') {
+          const sol = Math.max(0.000001, Number(args[1]) || 1);
+          const quote = await client.orderQuote({
+            inputMint: SOL_MINT,
+            outputMint: USDC_MINT,
+            amount: Math.round(sol * 1_000_000_000),
+          });
+          process.stdout.write(formatDFlowQuote(quote));
+        } else {
+          console.log(`\n  ${DIM}usage: /dflow <markets|trades|venues|tokens|quote> [limit|sol_amount]${RESET}\n`);
+        }
+      } catch (err) {
+        process.stdout.write(formatError('/dflow', (err as Error).message));
+      }
+      return { handled: true };
+    },
+  },
+  {
+    name: '/dark',
+    description: 'Dark DeFi Terminal bridge (usage: /dark <status|docs|build|run|path>)',
+    async run(ctx, args) {
+      const sub = args[0] ?? 'status';
+      try {
+        if (sub === 'status') {
+          printDarkDefiStatus(ctx);
+        } else if (sub === 'docs') {
+          printDarkDefiDocs(ctx);
+        } else if (sub === 'path') {
+          console.log(`\n  ${ctx.config.darkDefiTerminalPath}\n`);
+        } else if (sub === 'build') {
+          console.log(`\n  ${DIM}running npm run build in Dark DeFi terminal...${RESET}\n`);
+          const code = await runDarkDefiScript(ctx.config.darkDefiTerminalPath, 'build');
+          console.log(`\n  ${DIM}dark build exited with code ${code}${RESET}\n`);
+        } else if (sub === 'run' || sub === 'start') {
+          console.log(`\n  ${DIM}launching nested Dark X402 Terminal. Exit it to return to Clawd.${RESET}\n`);
+          const code = await runDarkDefiScript(ctx.config.darkDefiTerminalPath, 'start');
+          console.log(`\n  ${DIM}dark terminal exited with code ${code}${RESET}\n`);
+        } else {
+          console.log(`\n  ${DIM}usage: /dark <status|docs|build|run|path>${RESET}\n`);
+        }
+      } catch (err) {
+        process.stdout.write(formatError('/dark', (err as Error).message));
       }
       return { handled: true };
     },

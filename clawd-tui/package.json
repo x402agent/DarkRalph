@@ -1,7 +1,7 @@
 {
   "name": "@openclawdsolana/clawd-tui",
-  "version": "0.2.2",
-  "description": "OpenClawd TUI — a lobster-themed agent terminal built on @openrouter/agent with OAuth login.",
+  "version": "0.3.0",
+  "description": "OpenClawd TUI — Solana-native agent terminal with live Birdeye, Financial Datasets, DFlow, and Helius market data.",
   "type": "module",
   "bin": {
     "clawd": "dist/cli.js",
@@ -10,6 +10,7 @@
   "main": "dist/cli.js",
   "files": [
     "dist",
+    "docs",
     "README.md",
     "LICENSE"
   ],
@@ -31,6 +32,11 @@
     "clawd",
     "openclawd",
     "solana",
+    "birdeye",
+    "dflow",
+    "financialdatasets",
+    "markets",
+    "x402",
     "lobster"
   ],
   "license": "MIT",

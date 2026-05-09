@@ -17,6 +17,7 @@ import { Portfolio, CompactPortfolio, TokenList, AssetCard } from './Portfolio.j
 import { AlertsPanel, AlertBanner, AlertFeed, WhaleAlert, SignalAlert } from './Alerts.js';
 import { MarketHeatmap, SectorHeatmap, CorrelationMatrix, MiniHeatmap } from './Heatmap.js';
 import { ActivityFeed, TransactionStream, WalletActivity, NetworkStats, TopMovers } from './ActivityFeed.js';
+import { POPULAR_TOKENS } from '../services/index.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES

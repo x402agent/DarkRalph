@@ -4,6 +4,11 @@
 -- ═══════════════════════════════════════════════════════════════
 
 -- Drop existing tables (for fresh migration)
+DROP TABLE IF EXISTS wallet_balances_cache;
+DROP TABLE IF EXISTS goat_tool_calls;
+DROP TABLE IF EXISTS smart_wallets;
+DROP TABLE IF EXISTS api_key_history;
+DROP TABLE IF EXISTS transactions;
 DROP TABLE IF EXISTS agent_activity;
 DROP TABLE IF EXISTS sessions;
 DROP TABLE IF EXISTS agents;
