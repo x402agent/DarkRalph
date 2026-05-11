@@ -23,7 +23,7 @@
     "jsx": "react-jsx",
     "lib": ["ES2022"],
     "types": ["bun-types"],
-    "baseUrl": ".",
+    "baseUrl": "",
     "paths": {
       "@/*": ["src/*"],
       "@components/*": ["src/components/*"],
@@ -32,8 +32,8 @@
       "@skills/*": ["src/skills/*"],
       "@config/*": ["src/config/*"]
     },
-    "outDir": "./dist",
-    "rootDir": "./src"
+    "outDir": "dist",
+    "rootDir": "src"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

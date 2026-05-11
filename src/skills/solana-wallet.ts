@@ -2,24 +2,25 @@
 // DARK RALPH TUI - Solana Wallet Skills
 // ═══════════════════════════════════════════════════════════════════════════════
 
+import * as fs from 'fs';
 import {
-  Connection,
-  PublicKey,
-  Keypair,
-  Transaction,
-  SystemProgram,
-  LAMPORTS_PER_SOL,
-  sendAndConfirmTransaction,
-} from '@solana/web3.js';
-import {
-  getAssociatedTokenAddress,
   createTransferInstruction,
   getAccount,
+  getAssociatedTokenAddress,
   TOKEN_PROGRAM_ID,
-} from '@solana/spl-token';
-import * as fs from 'fs';
-import * as path from 'path';
+} from 'node_modules/@solana/spl-token/lib/types';
 import * as os from 'os';
+import * as path from 'path';
+
+import {
+  Connection,
+  Keypair,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  sendAndConfirmTransaction,
+  SystemProgram,
+  Transaction,
+} from '@solana/web3.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types

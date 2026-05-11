@@ -22,7 +22,7 @@ const RALPH_ASCII = `
 ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═╝
 `.trim();
 
-// Lobster claw ASCII — flanks the title. Mirrored on the right.
+// Lobster clawd ASCII — flanks the title. Mirrored on the right.
 const CLAW_LEFT = `
    ╱╲
   ╱██╲
@@ -78,7 +78,7 @@ export const Header: React.FC<HeaderProps> = ({ version = '1.0.0', showSubtitle 
         <Text>{SCANLINE}</Text>
       </Gradient>
 
-      {/* Banner: claw │ DARK RALPH │ claw */}
+      {/* Banner: clawd │ DARK RALPH │ clawd */}
       <Box flexDirection="row" marginTop={1}>
         <Box marginRight={1}>
           <Gradient colors={GRADIENT_PRESETS.ember}>
